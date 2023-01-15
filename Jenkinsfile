@@ -49,6 +49,15 @@ spec:
                 sh "mvn clean package"
             }
         }
+        stage('Push Artifact') {
+            steps {
+                script {
+                    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: env.AWS_CREDS_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    sh "aws s3 sync target/ s3://grafana-cr-logs-bucket/maven-releases/"
+                    }
+                }
+            }
+        }
         // Building Docker images
         stage('Docker Image') {
             steps{
@@ -63,6 +72,16 @@ spec:
                     withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: env.DH_CREDS_ID, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                     sh "docker login --username $USERNAME -p $PASSWORD docker.io"
                     sh "docker push ${IMAGE_REPO_NAME}:${IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+        stage('Push Helm Chart') {
+            steps {
+                script {
+                    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: env.AWS_CREDS_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    sh "tar -cvzf ${ARTIFACT_NAME}-${IMAGE_TAG}.tar.gz deployment/helm/${ARTIFACT_NAME}/"
+                    sh "aws s3 cp ${ARTIFACT_NAME}-${IMAGE_TAG}.tar.gz s3://grafana-cr-logs-bucket/helm-releases/"
                     }
                 }
             }
