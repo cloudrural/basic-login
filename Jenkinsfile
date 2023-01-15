@@ -66,7 +66,7 @@ spec:
                 }
             }
         }
-        stage('Logging into Docker Hub') {
+        stage('Pushing Docker Image into Docker Hub') {
             steps {
                 script {
                     withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: env.DH_CREDS_ID, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
